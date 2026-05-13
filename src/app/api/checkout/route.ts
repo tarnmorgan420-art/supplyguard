@@ -1,8 +1,6 @@
 import Stripe from "stripe";
 import { NextRequest, NextResponse } from "next/server";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
 const priceIds: Record<string, string> = {
   starter: process.env.STRIPE_STARTER_PRICE_ID!,
   growth: process.env.STRIPE_GROWTH_PRICE_ID!,
@@ -10,6 +8,7 @@ const priceIds: Record<string, string> = {
 };
 
 export async function POST(request: NextRequest) {
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
   const { plan } = await request.json();
 
   const session = await stripe.checkout.sessions.create({
