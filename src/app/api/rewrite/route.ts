@@ -1,21 +1,39 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
-
 export async function POST(request: NextRequest) {
-  const { copy } = await request.json();
+  try {
+    // Get IP address
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0] || 
+                request.headers.get("x-real-ip") || 
+                "unknown";
 
-  const message = await anthropic.messages.create({
-    model: "claude-sonnet-4-5",
-    max_tokens: 1024,
-    messages: [
-      {
-        role: "user",
-        content: `You are an FDA compliance expert for dietary supplement companies. 
-        
+    // Check usage count from cookie
+    const cookieHeader = request.headers.get("cookie") || "";
+    const usageMatch = cookieHeader.match(/free_usage=(\d+)/);
+    const usageCount = usageMatch ? parseInt(usageMatch[1]) : 0;
+
+    if (usageCount >= 3) {
+      return NextResponse.json(
+        { error: "FREE_LIMIT_REACHED" },
+        { status: 429 }
+      );
+    }
+
+    const anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+    });
+
+    const { copy } = await request.json();
+
+    const message = await anthropic.messages.create({
+      model: "claude-sonnet-4-5",
+      max_tokens: 1024,
+      messages: [
+        {
+          role: "user",
+          content: `You are an FDA compliance expert for dietary supplement companies. 
+          
 Rewrite the following supplement product copy to be FDA compliant by:
 1. Removing any disease claims (e.g. "cures", "treats", "prevents disease")
 2. Replacing them with allowed structure/function claims (e.g. "supports", "promotes", "helps maintain")
@@ -33,10 +51,24 @@ CHANGES MADE:
 [list what you changed and why]
 
 FDA DISCLAIMER NEEDED: [Yes/No]`,
-      },
-    ],
-  });
+        },
+      ],
+    });
 
-  const result = (message.content[0] as { type: string; text: string }).text;
-  return NextResponse.json({ result });
+    const result = (message.content[0] as { type: string; text: string }).text;
+    
+    // Set cookie to track usage
+    const newCount = usageCount + 1;
+    const response = NextResponse.json({ result, usageCount: newCount, limit: 3 });
+    response.cookies.set("free_usage", String(newCount), {
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+      httpOnly: true,
+      path: "/",
+    });
+    
+    return response;
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

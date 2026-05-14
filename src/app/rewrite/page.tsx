@@ -5,6 +5,8 @@ export default function Rewrite() {
   const [input, setInput] = useState("");
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
+  const [usageCount, setUsageCount] = useState(0);
+  const limit = 3;
 
   async function handleRewrite() {
     setLoading(true);
@@ -14,8 +16,16 @@ export default function Rewrite() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ copy: input }),
     });
+
+    if (res.status === 429) {
+      setResult("FREE_LIMIT_REACHED");
+      setLoading(false);
+      return;
+    }
+
     const data = await res.json();
     setResult(data.result);
+    if (data.usageCount) setUsageCount(data.usageCount);
     setLoading(false);
   }
 
@@ -55,8 +65,7 @@ export default function Rewrite() {
           <h1 style={{
             fontFamily: "'Instrument Serif', serif",
             fontSize: "clamp(32px, 4vw, 48px)",
-            color: "#f0ede8",
-            marginBottom: "12px",
+            color: "#f0ede8", marginBottom: "12px",
           }}>
             FDA Compliance Rewriter
           </h1>
@@ -106,7 +115,12 @@ export default function Rewrite() {
                 fontFamily: "'DM Sans', sans-serif", fontWeight: 300,
               }}
             />
-            <div style={{ padding: "16px 20px", borderTop: "1px solid rgba(240,237,232,0.06)" }}>
+            <div style={{ padding: "0 20px 12px", display: "flex", justifyContent: "flex-end" }}>
+              <span style={{ fontSize: "12px", color: "rgba(240,237,232,0.3)" }}>
+                {limit - usageCount} free rewrites remaining
+              </span>
+            </div>
+            <div style={{ padding: "0 20px 20px" }}>
               <button
                 onClick={handleRewrite}
                 disabled={loading || !input}
@@ -128,7 +142,7 @@ export default function Rewrite() {
           {/* Output */}
           <div style={{
             background: "rgba(240,237,232,0.03)",
-            border: `1px solid ${result ? "rgba(220,80,60,0.25)" : "rgba(240,237,232,0.08)"}`,
+            border: `1px solid ${result && result !== "FREE_LIMIT_REACHED" ? "rgba(220,80,60,0.25)" : "rgba(240,237,232,0.08)"}`,
             borderRadius: "16px",
             overflow: "hidden",
             transition: "border-color 0.3s",
@@ -141,7 +155,7 @@ export default function Rewrite() {
               <span style={{ fontSize: "12px", color: "rgba(240,237,232,0.35)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
                 Compliant version
               </span>
-              {result && (
+              {result && result !== "FREE_LIMIT_REACHED" && (
                 <button
                   onClick={() => navigator.clipboard.writeText(result)}
                   style={{
@@ -154,8 +168,9 @@ export default function Rewrite() {
               )}
             </div>
             <div style={{
-              height: "280px", padding: "20px", overflowY: "auto",
-              display: "flex", alignItems: loading || !result ? "center" : "flex-start",
+              height: "320px", padding: "20px", overflowY: "auto",
+              display: "flex",
+              alignItems: loading || !result ? "center" : "flex-start",
               justifyContent: loading || !result ? "center" : "flex-start",
             }}>
               {loading && (
@@ -169,7 +184,24 @@ export default function Rewrite() {
                   <p style={{ fontSize: "13px", color: "rgba(240,237,232,0.3)" }}>Analyzing your copy...</p>
                 </div>
               )}
-              {result && (
+              {result === "FREE_LIMIT_REACHED" && (
+                <div style={{ textAlign: "center", padding: "20px" }}>
+                  <p style={{ fontSize: "18px", color: "#dc503c", marginBottom: "8px", fontFamily: "'Instrument Serif', serif" }}>
+                    You've used your 3 free rewrites
+                  </p>
+                  <p style={{ fontSize: "13px", color: "rgba(240,237,232,0.4)", marginBottom: "24px", fontWeight: 300 }}>
+                    Sign up to get unlimited rewrites
+                  </p>
+                  <a href="/login" style={{
+                    background: "#dc503c", color: "#fff",
+                    padding: "10px 24px", borderRadius: "100px",
+                    fontSize: "13px", fontWeight: 500, textDecoration: "none",
+                  }}>
+                    Get full access →
+                  </a>
+                </div>
+              )}
+              {result && result !== "FREE_LIMIT_REACHED" && (
                 <pre style={{
                   whiteSpace: "pre-wrap", fontFamily: "'DM Sans', sans-serif",
                   fontSize: "14px", lineHeight: "1.7", color: "rgba(240,237,232,0.8)",
