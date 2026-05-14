@@ -20,48 +20,168 @@ export default function Rewrite() {
   }
 
   return (
-    <div className="min-h-screen bg-white font-sans">
-      <nav className="flex items-center justify-between px-8 py-5 border-b border-zinc-100">
-        <a href="/" className="text-xl font-bold text-zinc-900">SupplyGuard AI</a>
-        <span className="text-sm text-zinc-500">FDA Compliance Rewriter</span>
+    <div style={{
+      fontFamily: "'DM Sans', sans-serif",
+      background: "#0a0a0a",
+      color: "#f0ede8",
+      minHeight: "100vh",
+    }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        textarea:focus, input:focus { outline: none; }
+        textarea { resize: none; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(240,237,232,0.15); border-radius: 2px; }
+      `}</style>
+
+      <nav style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "20px 48px", borderBottom: "1px solid rgba(240,237,232,0.08)",
+        position: "sticky", top: 0, background: "rgba(10,10,10,0.9)",
+        backdropFilter: "blur(12px)", zIndex: 100,
+      }}>
+        <a href="/" style={{ fontFamily: "'Instrument Serif', serif", fontSize: "20px", color: "#f0ede8", textDecoration: "none" }}>
+          SupplyGuard
+        </a>
+        <span style={{ fontSize: "13px", color: "rgba(240,237,232,0.35)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+          Compliance Rewriter
+        </span>
       </nav>
 
-      <div className="max-w-4xl mx-auto px-8 py-16">
-        <h1 className="text-3xl font-bold text-zinc-900 mb-2">FDA Compliance Rewriter</h1>
-        <p className="text-zinc-500 mb-10">Paste your supplement copy below and get an FDA-compliant version instantly.</p>
+      <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "64px 48px" }}>
+        <div style={{ marginBottom: "48px" }}>
+          <h1 style={{
+            fontFamily: "'Instrument Serif', serif",
+            fontSize: "clamp(32px, 4vw, 48px)",
+            color: "#f0ede8",
+            marginBottom: "12px",
+          }}>
+            FDA Compliance Rewriter
+          </h1>
+          <p style={{ fontSize: "15px", color: "rgba(240,237,232,0.45)", fontWeight: 300 }}>
+            Paste your supplement copy. Get a compliant version back in seconds.
+          </p>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "20px",
+          alignItems: "start",
+        }}>
           {/* Input */}
-          <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-2">Your original copy</label>
+          <div style={{
+            background: "rgba(240,237,232,0.03)",
+            border: "1px solid rgba(240,237,232,0.08)",
+            borderRadius: "16px",
+            overflow: "hidden",
+          }}>
+            <div style={{
+              padding: "16px 20px",
+              borderBottom: "1px solid rgba(240,237,232,0.06)",
+              display: "flex", justifyContent: "space-between", alignItems: "center",
+            }}>
+              <span style={{ fontSize: "12px", color: "rgba(240,237,232,0.35)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                Original copy
+              </span>
+              {input && (
+                <button onClick={() => setInput("")} style={{
+                  background: "none", border: "none", color: "rgba(240,237,232,0.3)",
+                  fontSize: "12px", cursor: "pointer", fontFamily: "inherit",
+                }}>
+                  Clear
+                </button>
+              )}
+            </div>
             <textarea
-              className="w-full h-64 p-4 border border-zinc-200 rounded-xl text-sm text-zinc-800 resize-none focus:outline-none focus:ring-2 focus:ring-zinc-900"
-              placeholder="e.g. Our supplement cures fatigue and prevents heart disease. Treats anxiety and depression naturally..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
+              placeholder="e.g. Our supplement cures fatigue and treats depression naturally..."
+              style={{
+                width: "100%", height: "280px", padding: "20px",
+                background: "transparent", border: "none",
+                color: "#f0ede8", fontSize: "15px", lineHeight: "1.6",
+                fontFamily: "'DM Sans', sans-serif", fontWeight: 300,
+              }}
             />
-            <button
-              onClick={handleRewrite}
-              disabled={loading || !input}
-              className="mt-4 w-full bg-zinc-900 text-white py-3 rounded-xl font-medium hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? "Rewriting..." : "Rewrite for FDA compliance →"}
-            </button>
+            <div style={{ padding: "16px 20px", borderTop: "1px solid rgba(240,237,232,0.06)" }}>
+              <button
+                onClick={handleRewrite}
+                disabled={loading || !input}
+                style={{
+                  width: "100%", padding: "13px",
+                  background: input && !loading ? "#dc503c" : "rgba(240,237,232,0.06)",
+                  color: input && !loading ? "#fff" : "rgba(240,237,232,0.25)",
+                  border: "none", borderRadius: "100px",
+                  fontSize: "14px", fontWeight: 500,
+                  cursor: input && !loading ? "pointer" : "not-allowed",
+                  fontFamily: "inherit", transition: "all 0.2s",
+                }}
+              >
+                {loading ? "Rewriting..." : "Rewrite for FDA compliance →"}
+              </button>
+            </div>
           </div>
 
           {/* Output */}
-          <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-2">FDA compliant version</label>
-            <div className="w-full h-64 p-4 border border-zinc-200 rounded-xl text-sm text-zinc-800 overflow-y-auto bg-zinc-50">
+          <div style={{
+            background: "rgba(240,237,232,0.03)",
+            border: `1px solid ${result ? "rgba(220,80,60,0.25)" : "rgba(240,237,232,0.08)"}`,
+            borderRadius: "16px",
+            overflow: "hidden",
+            transition: "border-color 0.3s",
+          }}>
+            <div style={{
+              padding: "16px 20px",
+              borderBottom: "1px solid rgba(240,237,232,0.06)",
+              display: "flex", justifyContent: "space-between", alignItems: "center",
+            }}>
+              <span style={{ fontSize: "12px", color: "rgba(240,237,232,0.35)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                Compliant version
+              </span>
+              {result && (
+                <button
+                  onClick={() => navigator.clipboard.writeText(result)}
+                  style={{
+                    background: "none", border: "none", color: "rgba(240,237,232,0.3)",
+                    fontSize: "12px", cursor: "pointer", fontFamily: "inherit",
+                  }}
+                >
+                  Copy
+                </button>
+              )}
+            </div>
+            <div style={{
+              height: "280px", padding: "20px", overflowY: "auto",
+              display: "flex", alignItems: loading || !result ? "center" : "flex-start",
+              justifyContent: loading || !result ? "center" : "flex-start",
+            }}>
               {loading && (
-                <div className="flex items-center gap-2 text-zinc-400">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-zinc-900"></div>
-                  Analyzing your copy...
+                <div style={{ textAlign: "center" }}>
+                  <div style={{
+                    width: "24px", height: "24px", border: "2px solid rgba(240,237,232,0.1)",
+                    borderTopColor: "#dc503c", borderRadius: "50%",
+                    animation: "spin 0.8s linear infinite", margin: "0 auto 12px",
+                  }} />
+                  <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                  <p style={{ fontSize: "13px", color: "rgba(240,237,232,0.3)" }}>Analyzing your copy...</p>
                 </div>
               )}
-              {result && <pre className="whitespace-pre-wrap font-sans">{result}</pre>}
+              {result && (
+                <pre style={{
+                  whiteSpace: "pre-wrap", fontFamily: "'DM Sans', sans-serif",
+                  fontSize: "14px", lineHeight: "1.7", color: "rgba(240,237,232,0.8)",
+                  fontWeight: 300,
+                }}>
+                  {result}
+                </pre>
+              )}
               {!loading && !result && (
-                <span className="text-zinc-400">Your compliant copy will appear here...</span>
+                <p style={{ fontSize: "14px", color: "rgba(240,237,232,0.2)", fontWeight: 300 }}>
+                  Your compliant copy will appear here...
+                </p>
               )}
             </div>
           </div>
