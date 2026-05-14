@@ -1,23 +1,45 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
 export async function POST(request: NextRequest) {
   try {
-    // Get IP address
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0] || 
-                request.headers.get("x-real-ip") || 
-                "unknown";
+    // Check if user is logged in via auth header
+    const authHeader = request.headers.get("authorization");
+    let isPaidUser = false;
 
-    // Check usage count from cookie
-    const cookieHeader = request.headers.get("cookie") || "";
-    const usageMatch = cookieHeader.match(/free_usage=(\d+)/);
-    const usageCount = usageMatch ? parseInt(usageMatch[1]) : 0;
-
-    if (usageCount >= 3) {
-      return NextResponse.json(
-        { error: "FREE_LIMIT_REACHED" },
-        { status: 429 }
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       );
+      const { data: { user } } = await supabase.auth.getUser(token);
+
+      if (user) {
+        const adminSupabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+        const { data: sub } = await adminSupabase
+          .from("subscriptions")
+          .select("status")
+          .eq("user_id", user.id)
+          .single();
+
+        if (sub?.status === "active") isPaidUser = true;
+      }
+    }
+
+    // Check free usage limit for non-paid users
+    if (!isPaidUser) {
+      const cookieHeader = request.headers.get("cookie") || "";
+      const usageMatch = cookieHeader.match(/free_usage=(\d+)/);
+      const usageCount = usageMatch ? parseInt(usageMatch[1]) : 0;
+
+      if (usageCount >= 3) {
+        return NextResponse.json({ error: "FREE_LIMIT_REACHED" }, { status: 429 });
+      }
     }
 
     const anthropic = new Anthropic({
@@ -56,17 +78,22 @@ FDA DISCLAIMER NEEDED: [Yes/No]`,
     });
 
     const result = (message.content[0] as { type: string; text: string }).text;
-    
-    // Set cookie to track usage
-    const newCount = usageCount + 1;
-    const response = NextResponse.json({ result, usageCount: newCount, limit: 3 });
-    response.cookies.set("free_usage", String(newCount), {
-      maxAge: 60 * 60 * 24 * 30, // 30 days
-      httpOnly: true,
-      path: "/",
-    });
-    
-    return response;
+
+    if (!isPaidUser) {
+      const cookieHeader = request.headers.get("cookie") || "";
+      const usageMatch = cookieHeader.match(/free_usage=(\d+)/);
+      const usageCount = usageMatch ? parseInt(usageMatch[1]) : 0;
+      const newCount = usageCount + 1;
+      const response = NextResponse.json({ result, usageCount: newCount, limit: 3 });
+      response.cookies.set("free_usage", String(newCount), {
+        maxAge: 60 * 60 * 24 * 30,
+        httpOnly: true,
+        path: "/",
+      });
+      return response;
+    }
+
+    return NextResponse.json({ result, isPaidUser: true });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
