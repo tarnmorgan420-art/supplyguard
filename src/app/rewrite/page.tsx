@@ -7,6 +7,7 @@ export default function Rewrite() {
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
   const [usageCount, setUsageCount] = useState(0);
+  const [isPaid, setIsPaid] = useState(false);
   const limit = 3;
 
   async function handleRewrite() {
@@ -35,7 +36,7 @@ export default function Rewrite() {
     const data = await res.json();
     setResult(data.result);
     if (data.usageCount) setUsageCount(data.usageCount);
-    if (data.isPaidUser) setUsageCount(0);
+    if (data.isPaidUser) setIsPaid(true);
     setLoading(false);
   }
 
@@ -126,8 +127,8 @@ export default function Rewrite() {
               }}
             />
             <div style={{ padding: "0 20px 12px", display: "flex", justifyContent: "flex-end" }}>
-              <span style={{ fontSize: "12px", color: "rgba(240,237,232,0.3)" }}>
-                {usageCount >= limit ? "Upgrade for unlimited rewrites" : `${limit - usageCount} free rewrites remaining`}
+              <span style={{ fontSize: "12px", color: isPaid ? "#4ade80" : "rgba(240,237,232,0.3)" }}>
+                {isPaid ? "✦ Unlimited rewrites" : usageCount >= limit ? "Upgrade for unlimited rewrites" : `${limit - usageCount} free rewrites remaining`}
               </span>
             </div>
             <div style={{ padding: "0 20px 20px" }}>
