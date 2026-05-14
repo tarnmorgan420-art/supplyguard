@@ -9,7 +9,11 @@ const priceIds: Record<string, string> = {
 
 export async function POST(request: NextRequest) {
   try {
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key) {
+      return NextResponse.json({ error: "No Stripe key found", key: "undefined" }, { status: 500 });
+    }
+    const stripe = new Stripe(key);
     const { plan } = await request.json();
 
     const session = await stripe.checkout.sessions.create({
