@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 
 export default function Rewrite() {
@@ -8,7 +8,24 @@ export default function Rewrite() {
   const [loading, setLoading] = useState(false);
   const [usageCount, setUsageCount] = useState(0);
   const [isPaid, setIsPaid] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const limit = 3;
+
+  useEffect(() => {
+    async function checkSubscription() {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        const res = await fetch("/api/check-subscription", {
+          headers: { "Authorization": `Bearer ${session.access_token}` },
+        });
+        const data = await res.json();
+        if (data.isPaid) setIsPaid(true);
+      }
+      setCheckingAuth(false);
+    }
+    checkSubscription();
+  }, []);
 
   async function handleRewrite() {
     setLoading(true);
@@ -91,7 +108,6 @@ export default function Rewrite() {
           gap: "20px",
           alignItems: "start",
         }}>
-          {/* Input */}
           <div style={{
             background: "rgba(240,237,232,0.03)",
             border: "1px solid rgba(240,237,232,0.08)",
@@ -128,7 +144,7 @@ export default function Rewrite() {
             />
             <div style={{ padding: "0 20px 12px", display: "flex", justifyContent: "flex-end" }}>
               <span style={{ fontSize: "12px", color: isPaid ? "#4ade80" : "rgba(240,237,232,0.3)" }}>
-                {isPaid ? "✦ Unlimited rewrites" : usageCount >= limit ? "Upgrade for unlimited rewrites" : `${limit - usageCount} free rewrites remaining`}
+                {checkingAuth ? "..." : isPaid ? "✦ Unlimited rewrites" : usageCount >= limit ? "Upgrade for unlimited rewrites" : `${limit - usageCount} free rewrites remaining`}
               </span>
             </div>
             <div style={{ padding: "0 20px 20px" }}>
@@ -150,7 +166,6 @@ export default function Rewrite() {
             </div>
           </div>
 
-          {/* Output */}
           <div style={{
             background: "rgba(240,237,232,0.03)",
             border: `1px solid ${result && result !== "FREE_LIMIT_REACHED" ? "rgba(220,80,60,0.25)" : "rgba(240,237,232,0.08)"}`,
