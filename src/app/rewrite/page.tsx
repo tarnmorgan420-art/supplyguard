@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { createClient } from "@/lib/supabase";
 
 export default function Rewrite() {
   const [input, setInput] = useState("");
@@ -11,9 +12,17 @@ export default function Rewrite() {
   async function handleRewrite() {
     setLoading(true);
     setResult("");
+
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
     const res = await fetch("/api/rewrite", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ copy: input }),
     });
 
@@ -26,6 +35,7 @@ export default function Rewrite() {
     const data = await res.json();
     setResult(data.result);
     if (data.usageCount) setUsageCount(data.usageCount);
+    if (data.isPaidUser) setUsageCount(0);
     setLoading(false);
   }
 
@@ -117,7 +127,7 @@ export default function Rewrite() {
             />
             <div style={{ padding: "0 20px 12px", display: "flex", justifyContent: "flex-end" }}>
               <span style={{ fontSize: "12px", color: "rgba(240,237,232,0.3)" }}>
-                {limit - usageCount} free rewrites remaining
+                {usageCount >= limit ? "Upgrade for unlimited rewrites" : `${limit - usageCount} free rewrites remaining`}
               </span>
             </div>
             <div style={{ padding: "0 20px 20px" }}>
@@ -192,7 +202,7 @@ export default function Rewrite() {
                   <p style={{ fontSize: "13px", color: "rgba(240,237,232,0.4)", marginBottom: "24px", fontWeight: 300 }}>
                     Sign up to get unlimited rewrites
                   </p>
-                  <a href="/login" style={{
+                  <a href="/#pricing" style={{
                     background: "#dc503c", color: "#fff",
                     padding: "10px 24px", borderRadius: "100px",
                     fontSize: "13px", fontWeight: 500, textDecoration: "none",
